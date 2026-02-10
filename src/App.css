@@ -1,0 +1,6 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+/* through this all the css which the browser puts is removed through this  */
