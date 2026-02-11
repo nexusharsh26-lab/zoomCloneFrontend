@@ -21,6 +21,7 @@ import {
 import VideoCameraBackIcon from "@mui/icons-material/VideoCameraBack";
 import VideocamOffIcon from "@mui/icons-material/VideocamOff";
 import ChatIcon from "@mui/icons-material/Chat";
+import { useNavigate } from "react-router-dom";
 
 const server_url = "http://localhost:8000";
 
@@ -46,8 +47,7 @@ const VideoMeet = () => {
 
   let [screen, setScreen] = useState(); // screen sharing on off
 
-  let [showModal, setModal] = useState(); // vidoew audio setting on off modal
-
+  let [showModal, setModal] = useState(false); // chat section hide and show
   let [screenAvailable, setScreenAvailable] = useState(false);
 
   let [messages, setMessages] = useState([]); //all messages
@@ -279,7 +279,13 @@ const VideoMeet = () => {
   };
 
   //to do add message
-  let addMessage = () => {};
+  let addMessage = (data, sender, socketIdSender) => {
+    setMessages((prev) => [...prev, { sender: sender, data: data }]);
+
+    if (socketIdSender !== socketIdRef.current) {
+      setNewMessages((prevMessage) => prevMessage + 1);
+    }
+  };
   //most imp function
   let connectToSocketServer = () => {
     socketRef.current = io.connect(server_url, { secure: false });
@@ -302,6 +308,22 @@ const VideoMeet = () => {
             peerConfigConnections,
           );
 
+          // Create placeholder entry immediately so ontrack never has to "add"
+          setVideos((prev) => {
+            if (prev.some((v) => v.socketId === socketListId)) return prev;
+
+            const newVideo = {
+              socketId: socketListId,
+              stream: null, // will be filled by ontrack
+              autoPlay: true,
+              playsinline: true,
+            };
+
+            const updated = [...prev, newVideo];
+            videoRef.current = updated;
+            return updated;
+          });
+
           connections[socketListId].onicecandidate = (event) => {
             // this is sending you to the signalling server
             if (event.candidate != null) {
@@ -313,48 +335,35 @@ const VideoMeet = () => {
             }
           };
           connections[socketListId].ontrack = (event) => {
-            let videoExists = videoRef.current.find(
-              (video) => video.socketId === socketListId,
-            );
+            const remoteStream = event.streams[0];
 
-            if (videoExists) {
-              console.log(
-                // event.stream,
-                // event.streams,
-                event.streams[0],
-                "event.stream---1",
-              );
-              setVideos((videos) => {
-                const updatedVideos = videos.map((video) =>
-                  video.socketId === socketListId
-                    ? { ...video, stream: event.streams[0] }
-                    : video,
-                );
-
-                videoRef.current = updatedVideos;
-                return updatedVideos;
-              });
-            } else {
-              console.log(
-                // event.stream,
-                event.streams,
-                // event.streams[0],
-                "event.stream---2",
+            setVideos((prevVideos) => {
+              const existsIndex = prevVideos.findIndex(
+                (v) => v.socketId === socketListId,
               );
 
-              let newVideo = {
-                socketId: socketListId,
-                stream: event.streams[0],
-                autoPlay: true,
-                playsinline: true,
-              };
-
-              setVideos((videos) => {
-                const updatedVideos = [...videos, newVideo]; // push using spread operator
-                videoRef.current = updatedVideos;
-                return updatedVideos;
-              });
-            }
+              if (existsIndex !== -1) {
+                // Just update the stream (this is the normal case for audio+video tracks)
+                const updated = [...prevVideos];
+                updated[existsIndex] = {
+                  ...updated[existsIndex],
+                  stream: remoteStream,
+                };
+                videoRef.current = updated;
+                return updated;
+              } else {
+                // This should almost never happen now (fallback)
+                const newVideo = {
+                  socketId: socketListId,
+                  stream: remoteStream,
+                  autoPlay: true,
+                  playsinline: true,
+                };
+                const updated = [...prevVideos, newVideo];
+                videoRef.current = updated;
+                return updated;
+              }
+            });
           };
 
           if (window.localStream !== undefined && window.localStream !== null) {
@@ -458,7 +467,7 @@ const VideoMeet = () => {
             socketRef.current.emit(
               "signal",
               id,
-              JSON.stringify({ sdp: connections[id.localDescription] }),
+              JSON.stringify({ sdp: connections[id].localDescription }),
             );
           })
           .catch((e) => {
@@ -505,10 +514,26 @@ const VideoMeet = () => {
     if (screen !== undefined) {
       getDisplayMedia();
     }
-  }, []);
+  }, [screen]);
 
   let handleScreen = () => {
     setScreen(!screen);
+  };
+
+  let sendMessage = () => {
+    socketRef.current.emit("chat-message", message, username);
+    setMessage("");
+  };
+  let routeTo = useNavigate();
+  let handleEndCall = () => {
+    try {
+      let tracks = localVideoRef.current.srcObject.getTracks();
+      tracks.forEach((track) => track.stop());
+    } catch (e) {
+      console.log(e);
+    }
+
+    routeTo("/home");
   };
 
   return (
@@ -534,6 +559,42 @@ const VideoMeet = () => {
         </Box>
       ) : (
         <Box sx={{}} className={styles.meetVideoContainer}>
+          {showModal === true ? (
+            <Box className={styles.chatRoom}>
+              <Box className={styles.chatContainer}>
+                <Typography sx={{ fontSize: "32px" }}>Chat </Typography>
+                <Box className={styles.chattingArea}>
+                  <Box className={styles.chattingDisplay}>
+                    {messages.length > 0 ? (
+                      messages?.map((item, index) => {
+                        return (
+                          <Box key={index} sx={{ marginBottom: "12px" }}>
+                            <Typography sx={{ fontWeight: "700" }}>
+                              {item.sender}
+                            </Typography>
+                            <Typography>{item.data}</Typography>
+                          </Box>
+                        );
+                      })
+                    ) : (
+                      <Typography>No messages yet</Typography>
+                    )}
+                  </Box>
+                  <TextField
+                    label="outlined"
+                    placeholder="Enter the chat"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                  />
+                  <Button variant="contained" onClick={sendMessage}>
+                    Send
+                  </Button>
+                </Box>
+              </Box>
+            </Box>
+          ) : (
+            <></>
+          )}
           <Box className={styles.buttonContainer}>
             <IconButton onClick={handleVideo}>
               {video === true ? (
@@ -542,7 +603,7 @@ const VideoMeet = () => {
                 <VideocamOffIcon sx={{ color: "white" }} />
               )}
             </IconButton>
-            <IconButton>
+            <IconButton onClick={handleEndCall}>
               <CallEnd sx={{ color: "red" }} />
             </IconButton>
             <IconButton onClick={handleAudio}>
@@ -566,7 +627,7 @@ const VideoMeet = () => {
             )}
 
             <Badge badgeContent={newMessages} max={999} color="secondary">
-              <IconButton>
+              <IconButton onClick={() => setModal(!showModal)}>
                 {" "}
                 <ChatIcon sx={{ color: "white" }} />{" "}
               </IconButton>
