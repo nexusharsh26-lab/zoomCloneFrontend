@@ -1,9 +1,10 @@
 import React from "react";
 import "./landing.css";
 import mobileImg from "../../../assets/mobile.png";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function landingPage() {
+  const router = useNavigate();
   return (
     <div className="landingPageContainer">
       <nav>
@@ -11,9 +12,27 @@ export default function landingPage() {
           <h2>Apna Video Call</h2>
         </div>
         <div className="navList">
-          <p>Join as Guest</p>
-          <p>Register</p>
-          <div role="button">
+          <p
+            onClick={() => {
+              router("/guestlink");
+            }}
+          >
+            {" "}
+            Join as Guest
+          </p>
+          <p
+            onClick={() => {
+              router("/auth");
+            }}
+          >
+            Register
+          </p>
+          <div
+            role="button"
+            onClick={() => {
+              router("/auth");
+            }}
+          >
             <p>Login</p>
           </div>
         </div>
