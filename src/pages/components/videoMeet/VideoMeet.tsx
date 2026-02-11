@@ -441,20 +441,52 @@ const VideoMeet = () => {
       console.log(e);
     }
 
-    // window.localStream = stream;
-    // localVideoRef.current.srcObject = stream;
+    window.localStream = stream;
+    localVideoRef.current.srcObject = stream;
 
-    // for (let id in connections) {
-    //   if (id === socketIdRef.current) continue;
+    for (let id in connections) {
+      if (id === socketIdRef.current) continue;
 
-    //   connections[id].addStream(window.localStream);
-    //   connections[id].createOffer().then((description) => {
-    //     connections[id].setLocalDescription(description).then(() => {
-    //       (socketRef.current.emit("signal", id),
-    //         JSON.stringify({ sdp: connections }));
-    //     });
-    //   });
-    // }
+      // connections[id].addStream(window.localStream);
+      window.localStream.getTracks().forEach((track) => {
+        connections[id].addTrack(track, window.localStream);
+      });
+      connections[id].createOffer().then((description) => {
+        connections[id]
+          .setLocalDescription(description)
+          .then(() => {
+            socketRef.current.emit(
+              "signal",
+              id,
+              JSON.stringify({ sdp: connections[id.localDescription] }),
+            );
+          })
+          .catch((e) => {
+            console.log(e);
+          });
+      });
+
+      stream.getTracks().forEach(
+        (track) =>
+          (track.onended = () => {
+            setScreen(false);
+
+            try {
+              let tracks = localVideoRef.current.srcObject.getTracks();
+              tracks.forEach((track) => track.stop());
+            } catch (e) {
+              console.log(e);
+            }
+            //  black silience
+            let blackSilence = (...args) =>
+              new MediaStream([black(...args), silence()]);
+            window.localStream = blackSilence();
+            localVideoRef.current.srcObject = window.localStream;
+
+            getUserMedia();
+          }),
+      );
+    }
   };
 
   let getDisplayMedia = () => {
@@ -522,7 +554,7 @@ const VideoMeet = () => {
             </IconButton>
 
             {screenAvailable === true ? (
-              <IconButton>
+              <IconButton onClick={handleScreen}>
                 {screen === true ? (
                   <ScreenShare sx={{ color: "white" }} />
                 ) : (
@@ -548,7 +580,7 @@ const VideoMeet = () => {
           />
           <Box className={styles.conferenceView}>
             {videos.map((video) => (
-              <Box key={video.socketId} sx={{}}>
+              <Box key={video.socketId}>
                 {/* <Typography sx={{ border: "1px solid black" }}>
                   {video.socketId}
                 </Typography> */}
