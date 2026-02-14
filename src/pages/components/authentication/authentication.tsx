@@ -15,7 +15,6 @@ export default function Authentication() {
       >
         <Stack
           sx={{
-            border: "1px solid black ",
             backgroundImage: `url("https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1600&auto=format&fit=crop")`,
 
             flex: 0.6,

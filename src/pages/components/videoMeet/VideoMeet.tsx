@@ -54,7 +54,7 @@ const VideoMeet = () => {
 
   let [message, setMessage] = useState(""); //our message
 
-  let [newMessages, setNewMessages] = useState(9); //notification messages number
+  let [newMessages, setNewMessages] = useState(); //notification messages number
 
   let [askForUsername, setAskForUsername] = useState(true); // for guest login usernaeme
 
