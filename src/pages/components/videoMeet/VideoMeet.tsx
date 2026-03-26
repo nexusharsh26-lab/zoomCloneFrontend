@@ -22,8 +22,9 @@ import VideoCameraBackIcon from "@mui/icons-material/VideoCameraBack";
 import VideocamOffIcon from "@mui/icons-material/VideocamOff";
 import ChatIcon from "@mui/icons-material/Chat";
 import { useNavigate } from "react-router-dom";
+import server from "../../../environment";
 
-const server_url = "http://localhost:8000";
+const server_url = `${server}`;
 
 var connections = {}; //conventional way is using useRef connections = useREf({}), and to use ist connections.current
 
