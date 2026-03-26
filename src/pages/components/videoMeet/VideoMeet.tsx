@@ -16,7 +16,7 @@ import {
   MicOutlined,
   ScreenShare,
   StopScreenShare,
-  VideoCameraBackOutlined,
+  VideoCameraBackOutlined,218
 } from "@mui/icons-material";
 import VideoCameraBackIcon from "@mui/icons-material/VideoCameraBack";
 import VideocamOffIcon from "@mui/icons-material/VideocamOff";
@@ -33,10 +33,10 @@ const peerConfigConnections = {
 };
 
 const VideoMeet = () => {
-  var socketRef = useRef(); //
-  let socketIdRef = useRef(); //this is our socket id when we connect
+  var socketRef = useRef(null); //
+  let socketIdRef = useRef(null); //this is our socket id when we connect
 
-  let localVideoRef = useRef(); // our video we will store in this
+  let localVideoRef = useRef(null); // our video we will store in this
 
   let [videoAvailable, setVideoAvailable] = useState(true); // video hard ware  permission
 
@@ -647,10 +647,10 @@ const VideoMeet = () => {
                   {video.socketId}
                 </Typography> */}
                 <video
-                  data-socket={video.socketId}
+                  data-socket={video?.socketId}
                   ref={(ref) => {
-                    if (ref && video.stream) {
-                      ref.srcObject = video.stream;
+                    if (ref && video?.stream) {
+                      ref.srcObject = video?.stream;
                     }
                   }}
                   autoPlay

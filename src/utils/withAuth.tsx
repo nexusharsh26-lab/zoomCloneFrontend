@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-const withAuth = (WrappedComponent) => {
+const withAuth = (WrappedComponent: React.ReactNode) => {
   const AuthComponent = (props) => {
     const router = useNavigate();
 
