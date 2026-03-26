@@ -16,7 +16,6 @@ import {
   MicOutlined,
   ScreenShare,
   StopScreenShare,
-  VideoCameraBackOutlined,218
 } from "@mui/icons-material";
 import VideoCameraBackIcon from "@mui/icons-material/VideoCameraBack";
 import VideocamOffIcon from "@mui/icons-material/VideocamOff";
